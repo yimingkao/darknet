@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include "darknet.h"
 #include "network.h"
 #include "region_layer.h"
@@ -1298,8 +1299,31 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
     int j;
     float nms = .45;    // 0.4F
+	struct dirent *pDirent = NULL;
+	DIR *pDir = NULL;
+	char imgdir[256];
+	if (filename) {
+		pDir = opendir(filename);
+		if (pDir) {
+			sprintf(imgdir, "mkdir %s/images", filename);
+			printf("%s\n", imgdir);
+			system(imgdir);
+			sprintf(imgdir, "%s/images", filename);
+		}
+	}
+
     while (1) {
-        if (filename) {
+		if (pDir) {
+			while((pDirent = readdir(pDir)) != NULL) {
+				if (!strcmp(pDirent->d_name, ".")) continue;
+				if (!strcmp(pDirent->d_name, "..")) continue;
+				if (pDirent->d_type != DT_REG) continue;
+				break; /* got one same so break */
+			}
+			if (!pDirent) break; /* break outside loop */
+			sprintf(input, "%s/%s", filename, pDirent->d_name);
+		}
+        else if (filename) {
             strncpy(input, filename, 256);
             if (strlen(input) > 0)
                 if (input[strlen(input) - 1] == 0x0d) input[strlen(input) - 1] = 0;
@@ -1336,10 +1360,21 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         detection *dets = get_network_boxes(&net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letter_box);
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
         draw_detections_v3(im, dets, nboxes, thresh, names, alphabet, l.classes, ext_output);
-        save_image(im, "predictions");
-        if (!dont_show) {
-            show_image(im, "predictions");
+        if (pDir) {
+			char pred[256];
+			char oname[256];
+			sprintf(oname, "%s", pDirent->d_name);
+			char *p = strrchr(oname, '.');
+			if (p) *p = '\0';
+			sprintf(pred, "%s/%s", imgdir, oname);
+			save_image(im, pred);
         }
+        else {
+	        save_image(im, "predictions");
+	        if (!dont_show) {
+	            show_image(im, "predictions");
+	        }
+	    }
 
         if (outfile) {
             if (json_buf) {
@@ -1388,8 +1423,9 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             destroy_all_windows_cv();
         }
 
-        if (filename) break;
+        if (!pDir && filename) break;
     }
+    if (pDir) closedir(pDir);
 
     if (outfile) {
         char *tmp = "\n]";
@@ -1470,6 +1506,7 @@ void run_detector(int argc, char **argv)
     }
 
     int clear = find_arg(argc, argv, "-clear");
+    char *dir = find_char_arg(argc, argv, "-dir", 0);
 
     char *datacfg = argv[3];
     char *cfg = argv[4];
@@ -1478,7 +1515,13 @@ void run_detector(int argc, char **argv)
         if (strlen(weights) > 0)
             if (weights[strlen(weights) - 1] == 0x0d) weights[strlen(weights) - 1] = 0;
     char *filename = (argc > 6) ? argv[6] : 0;
-    if (0 == strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, thresh, hier_thresh, dont_show, ext_output, save_labels, outfile, letter_box);
+    if (0 == strcmp(argv[2], "test")) {
+    	if (dir) {
+    		test_detector(datacfg, cfg, weights, dir, thresh, hier_thresh, dont_show, ext_output, save_labels, outfile, letter_box);
+	    } else {
+	    	test_detector(datacfg, cfg, weights, filename, thresh, hier_thresh, dont_show, ext_output, save_labels, outfile, letter_box);
+	    }
+    }
     else if (0 == strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear, dont_show, calc_map, mjpeg_port, show_imgs);
     else if (0 == strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if (0 == strcmp(argv[2], "recall")) validate_detector_recall(datacfg, cfg, weights);
