@@ -904,8 +904,14 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
         }
     }
 
+/* ymkao: only calculate TP iou for check if better fit. */
+#if 0
     if ((tp_for_thresh + fp_for_thresh) > 0)
         avg_iou = avg_iou / (tp_for_thresh + fp_for_thresh);
+#else
+    if (tp_for_thresh)
+	    avg_iou = avg_iou / tp_for_thresh;
+#endif
 
     int class_id;
     for(class_id = 0; class_id < classes; class_id++){
