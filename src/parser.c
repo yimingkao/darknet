@@ -1399,6 +1399,7 @@ network parse_network_cfg_custom(char *filename, int batch, int time_steps)
     int avg_outputs = 0;
     int avg_counter = 0;
     float bflops = 0;
+    long long nweights = 0;
     size_t workspace_size = 0;
     size_t max_inputs = 0;
     size_t max_outputs = 0;
@@ -1690,6 +1691,7 @@ network parse_network_cfg_custom(char *filename, int batch, int time_steps)
             }
         }
         if (l.bflops > 0) bflops += l.bflops;
+	if (l.nweights > 0) nweights += l.nweights;
 
         if (l.w > 1 && l.h > 1) {
             avg_outputs += l.outputs;
@@ -1766,6 +1768,7 @@ network parse_network_cfg_custom(char *filename, int batch, int time_steps)
     net.output = get_network_output(net);
     avg_outputs = avg_outputs / avg_counter;
     fprintf(stderr, "Total BFLOPS %5.3f \n", bflops);
+    fprintf(stderr, "Total params %lld, %5.3f \n", nweights, ((double)nweights) / 1000000.0);
     fprintf(stderr, "avg_outputs = %d \n", avg_outputs);
 #ifdef GPU
     get_cuda_stream();
