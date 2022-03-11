@@ -1,3 +1,25 @@
+# Modification
+. Add parameter size dump when parse network.
+. Modify IOU calculation for only count TP. We want to check if decoded boxes better fit of TP.
+. Add darklog.py to dump the current training progress due to we might not able to enable xwindow when training.
+. Add -dir to input directory for inference
+
+## Execution
+. Input textfile with all patterns path
+```
+# remember to create the backup folder
+$ ./darknet detector test yolov4-tiny/coco.data ../cfg/yolov4-tiny.cfg yolov4-tiny/yolov4-tiny.weights -ext_output -dont_show -out result.json < testlist.txt
+```
+Content of coco.data
+```
+classes= 80
+train  = yolov4-tiny/testlist.txt
+valid  = yolov4-tiny/testlist.txt
+names = yolov4-tiny/coco.names
+backup = yolov4-tiny/backup
+eval=coco
+```
+
 # Yolo v4, v3 and v2 for Windows and Linux
 
 ## (neural networks for object detection)
