@@ -1,8 +1,8 @@
 # Modification
-. Add parameter size dump when parse network.
-. Modify IOU calculation for only count TP. We want to check if decoded boxes better fit of TP.
-. Add darklog.py to dump the current training progress due to we might not able to enable xwindow when training.
-. Add -dir to input directory for inference
+- Add parameter size dump when parse network.
+- Modify IOU calculation for only count TP. We want to check if decoded boxes better fit of TP.
+- Add darklog.py to dump the current training progress due to we might not able to enable xwindow when training.
+- Add -dir to input directory for inference
 
 ## Execution
 . Input textfile with all patterns path
